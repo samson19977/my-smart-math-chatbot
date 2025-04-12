@@ -1,0 +1,90 @@
+import streamlit as st
+import pandas as pd
+import os
+import zipfile
+from PIL import Image
+
+# 🎨 Page setup
+st.set_page_config(page_title="Smart Math Teacher", layout="centered")
+
+# 📁 Correct image folder
+ZIP_FILE = "Image_for_group_4-6.zip"
+IMAGE_FOLDER = "Image_for_group_4-6"
+
+# 🔓 Extract images if not already
+if not os.path.exists(IMAGE_FOLDER) and os.path.exists(ZIP_FILE):
+    with zipfile.ZipFile(ZIP_FILE, 'r') as zip_ref:
+        zip_ref.extractall()
+
+# 📘 Load the dataset
+data = pd.read_excel("Dataset for 4-6 Age Group.xlsx")
+
+# 🔁 Session state
+if 'index' not in st.session_state:
+    st.session_state.index = 0
+if 'show_answer' not in st.session_state:
+    st.session_state.show_answer = False
+
+# ✨ Styling
+st.markdown("""
+    <style>
+    .fun-title {
+        font-size: 36px;
+        color: #ff3399;
+        text-align: center;
+        font-family: Comic Sans MS;
+    }
+    .question-box {
+        border: 3px dashed #ffcc00;
+        padding: 20px;
+        border-radius: 15px;
+        background-color: #fff8dc;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# 🎉 App title
+st.markdown("<div class='fun-title'>🎓 Smart Math Teacher</div>", unsafe_allow_html=True)
+st.markdown("### 👶 Hello Little Genius! Let’s play and learn some magical math! ✨🎈")
+
+# 🧠 Main logic
+if st.session_state.index < len(data):
+    row = data.iloc[st.session_state.index]
+    st.markdown(f"<div class='question-box'>📝 <b>Question {st.session_state.index + 1}:</b> {row['problem']}</div>", unsafe_allow_html=True)
+
+    # 🖼️ Show image if exists
+    image_name = str(row['image']) if pd.notna(row['image']) else None
+    if image_name:
+        image_path = os.path.join(IMAGE_FOLDER, f"{image_name}.png")
+        if os.path.exists(image_path):
+            st.image(image_path, width=250, caption="👀 Count carefully and have fun!")
+        else:
+            st.warning(f"❌ Oops! We couldn’t find the image `{image_name}.png` 😢")
+
+    # ✍️ Answer input - always blank
+    user_answer = st.text_input("🧠 Type your answer here:", value="", key=f"answer_{st.session_state.index}")
+
+    # ✅ Submit
+    if st.button("🎯 Submit Answer"):
+        if user_answer.strip() == str(row['answer']):
+            st.balloons()
+            st.success("🌟 Bravo! You're a math superstar! 💖✨ I'm *super proud* of you! 🥳 You're making numbers dance like magic! 🎶💫 Keep up the amazing work, little genius! 🌈🧠")
+            st.session_state.show_answer = False
+        else:
+            st.warning("🧐 Oopsie! That’s not quite right, but you’re doing amazing! 🌟 Wanna see the correct answer and learn something new? 💡🧠 You’ve got this! 🧐💡")
+            st.session_state.show_answer = True
+
+    # 💡 Show answer
+    if st.session_state.show_answer:
+        if st.button("💡 Show the Correct Answer"):
+            st.info(f"✅ The correct answer is: **{row['answer']}** 🎯")
+
+    # 👉 Next Question
+    if st.button("👉 Next Question"):
+        st.session_state.index += 1
+        st.session_state.show_answer = False
+        st.rerun()
+
+else:
+    st.balloons()
+    st.success("🏅 Wooohooo! You finished all the questions! 🎓 You're officially a Math Hero! 🦸‍♀️🦸‍♂️ Time to celebrate! 🎉🥳")
